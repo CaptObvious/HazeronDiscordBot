@@ -84,7 +84,7 @@ while True:
 
     for unsent_message in unsent_messages:
         print(unsent_message)
-        r_p = r.post(webhook_url, data={"username": unsent_message.player, "content": unsent_message.message})
+        r_p = r.post(webhook_url, data={"username": f"[G] {unsent_message.player}", "content": unsent_message.message})
 
         while r_p.status_code == 429:
             rate_limit_data = r_p.json()
