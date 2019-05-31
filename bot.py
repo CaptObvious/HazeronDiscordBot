@@ -1,3 +1,4 @@
+import json
 from hashlib import md5
 from time import sleep
 
@@ -13,9 +14,11 @@ ssm = boto3.client("secretsmanager")
 def get_webhook_url():
     global ssm
 
-    return ssm.get_secret_value(
+    ssm_response = json.loads(ssm.get_secret_value(
         SecretId="HazeronDiscordBot/WebhookURL"
-    )['SecretString']
+    )['SecretString'])
+
+    return ssm_response["WebhookURL"]
 
 
 webhook_url = get_webhook_url()
