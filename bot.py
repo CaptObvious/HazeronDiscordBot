@@ -55,15 +55,18 @@ def parse_galactic_chat(input_html: str) -> [ChatMessage]:
     messages = []
 
     for line in message_lines:
-        message_soup = BeautifulSoup(line, "html.parser")
-        segments = message_soup.find_all(["div", "font"])
+        try:
+            message_soup = BeautifulSoup(line, "html.parser")
+            segments = message_soup.find_all(["div", "font"])
 
-        time = next(segments[0].contents[0].strings).rstrip()
-        galaxy = segments[1].string.lstrip()
-        player = segments[2].string
-        message = segments[3].string
+            time = next(segments[0].contents[0].strings).rstrip()
+            galaxy = segments[1].string.lstrip()
+            player = segments[2].string
+            message = segments[3].string
 
-        messages.append(ChatMessage(galaxy, player, message, time))
+            messages.append(ChatMessage(galaxy, player, message, time))
+        except IndexError:
+            continue
 
     return messages
 
