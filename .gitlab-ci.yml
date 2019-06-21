@@ -12,3 +12,10 @@ build:
     - docker build --pull -t "$CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA" -t "$CI_REGISTRY_IMAGE:latest" .
     - docker push "$CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA"
     - docker push "$CI_REGISTRY_IMAGE:latest"
+
+deploy:
+  stage: deploy
+  services:
+    - docker:dind
+  script:
+    - source deploy.sh
