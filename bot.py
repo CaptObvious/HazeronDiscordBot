@@ -1,14 +1,18 @@
 import json
 import os
+import re
 from hashlib import md5
 from time import sleep
 from typing import List
 
 import boto3
 import requests
-from bs4 import BeautifulSoup
 
 SEEN_MESSAGES_PATH = "/usr/share/hazeron-persistent/seen_messages.json"
+SYSTEM_MESSAGE_REGEX = re.compile(r"(?P<time>\d\d:\d\d).*>Hazeron<.*\">(?P<message>[^<]*)")
+USER_MESSAGE_REGEX = re.compile(
+    r"(?P<time>\d\d:\d\d).*[^;]\">(?P<player>[^<]*).*\">(?P<message>[^<]*)"
+)
 
 r = requests.Session()
 ssm = boto3.client("secretsmanager")
@@ -37,8 +41,7 @@ seen_messages = load_seen_messages()
 
 
 class ChatMessage:
-    def __init__(self, galaxy: str, player: str, message: str, time):
-        self.galaxy = galaxy
+    def __init__(self, player: str, message: str, time: str):
         self.player = player
         self.message = message.replace(" @", " @\u200b")
 
@@ -48,7 +51,7 @@ class ChatMessage:
         self.time = time
 
     def __repr__(self) -> str:
-        return f"[{self.galaxy}] {self.player}: {self.message}"
+        return f"{self.player}: {self.message}"
 
     @property
     def hash(self) -> str:
@@ -71,23 +74,11 @@ def fetch_galactic_chat() -> str:
 
 
 def parse_galactic_chat(input_html: str) -> [ChatMessage]:
-    message_lines = [x for x in input_html.split("\n") if "font" in x]
+    user_messages = [x.groupdict() for x in USER_MESSAGE_REGEX.finditer(input_html)]
+    system_messages = [x.groupdict() for x in SYSTEM_MESSAGE_REGEX.finditer(input_html)]
 
-    parsed_messages = []
-
-    for line in message_lines:
-        try:
-            message_soup = BeautifulSoup(line, "html.parser")
-            segments = message_soup.find_all(["div", "font"])
-
-            time = next(segments[0].contents[0].strings).rstrip()
-            galaxy = segments[1].string.lstrip()
-            player = segments[2].string
-            message = segments[3].string
-
-            parsed_messages.append(ChatMessage(galaxy, player, message, time))
-        except IndexError:
-            continue
+    parsed_messages = [ChatMessage(x['player'], x['message'], x['time']) for x in user_messages]
+    parsed_messages += [ChatMessage("SYSTEM", x["message"], x["time"]) for x in system_messages]
 
     return parsed_messages
 
