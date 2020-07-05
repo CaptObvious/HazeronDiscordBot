@@ -1,13 +1,16 @@
 import json
+import os
 from hashlib import md5
 from time import sleep
+from typing import List
 
 import boto3
 import requests
 from bs4 import BeautifulSoup
 
+SEEN_MESSAGES_PATH = "/usr/share/hazeron-persistent/seen_messages.json"
+
 r = requests.Session()
-seen_messages = []
 ssm = boto3.client("secretsmanager")
 
 
@@ -20,6 +23,17 @@ def get_webhook_url():
 
 
 webhook_url = get_webhook_url()
+
+
+def load_seen_messages() -> List[str]:
+    if not os.path.exists(SEEN_MESSAGES_PATH):
+        return []
+
+    with open(SEEN_MESSAGES_PATH) as f:
+        return json.loads(f.read())
+
+
+seen_messages = load_seen_messages()
 
 
 class ChatMessage:
@@ -39,6 +53,15 @@ class ChatMessage:
     @property
     def hash(self) -> str:
         return md5(f"[{self.time}] {str(self)}".encode("utf-8")).hexdigest()
+
+
+def save_seen_messages() -> None:
+    global seen_messages
+
+    with open(SEEN_MESSAGES_PATH, "w") as f:
+        f.write(json.dumps(seen_messages))
+        f.flush()
+        os.fsync(f.fileno())
 
 
 def fetch_galactic_chat() -> str:
@@ -102,5 +125,6 @@ while True:
         seen_messages.append(unsent_message.hash)
 
     clean_seen_messages(messages)
+    save_seen_messages()
 
     sleep(15)
