@@ -14,9 +14,7 @@ ssm = boto3.client("secretsmanager")
 def get_webhook_url():
     global ssm
 
-    ssm_response = json.loads(ssm.get_secret_value(
-        SecretId="HazeronDiscordBot/WebhookURL"
-    )['SecretString'])
+    ssm_response = json.loads(ssm.get_secret_value(SecretId="HazeronDiscordBot/WebhookURL")['SecretString'])
 
     return ssm_response["WebhookURL"]
 
@@ -44,7 +42,7 @@ class ChatMessage:
 
 
 def fetch_galactic_chat() -> str:
-    returned_html = r.get("http://hazeron.com/galactic.html")
+    returned_html = r.get("https://hazeron.com/galactic.html")
 
     return returned_html.content.decode("utf-8")
 
@@ -52,7 +50,7 @@ def fetch_galactic_chat() -> str:
 def parse_galactic_chat(input_html: str) -> [ChatMessage]:
     message_lines = [x for x in input_html.split("\n") if "font" in x]
 
-    messages = []
+    parsed_messages = []
 
     for line in message_lines:
         try:
@@ -64,11 +62,11 @@ def parse_galactic_chat(input_html: str) -> [ChatMessage]:
             player = segments[2].string
             message = segments[3].string
 
-            messages.append(ChatMessage(galaxy, player, message, time))
+            parsed_messages.append(ChatMessage(galaxy, player, message, time))
         except IndexError:
             continue
 
-    return messages
+    return parsed_messages
 
 
 def clean_seen_messages(current_messages: [ChatMessage]) -> None:
