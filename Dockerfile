@@ -2,7 +2,7 @@ FROM python:3
 
 ADD bot.py /
 
-RUN pip install boto3
-RUN pip install requests
+RUN pip3 install boto3
+RUN pip3 install requests
 
 CMD ["python", "bot.py"]

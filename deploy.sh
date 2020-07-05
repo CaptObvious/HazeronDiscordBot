@@ -1,6 +1,7 @@
 #!/bin/sh
 
-apk add --update python python-dev py-pip
+apk update
+apk add --update python3 python3-dev py3-pip
 pip install awscli --upgrade
 
 export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
